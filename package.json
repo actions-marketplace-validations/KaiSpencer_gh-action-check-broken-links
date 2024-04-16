@@ -10,11 +10,6 @@
     "test": "vitest",
     "all": "$npm_execpath run build && $npm_execpath run pack && $npm_execpath run test --run"
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "next-hashicorp precommit"
-    }
-  },
   "keywords": [
     "actions",
     "node",
