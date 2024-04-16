@@ -1,31 +1,32 @@
-name: "C/I"
+name: 'C/I'
 
 on:
   pull_request:
   push:
     branches:
       - master
-      - "releases/*"
+      - 'releases/*'
 
 jobs:
   ci:
     name: Build / Test / Run
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v1
 
-      - run: npm ci
+      - run: bun install
 
       - name: Build / Test
-        run: npm run all
+        run: bun run all
 
       - name: Run
         id: action
         continue-on-error: true
         uses: ./
         with:
-          baseUrl: "https://hashicorp.com"
-          files: "pages/test.mdx"
+          baseUrl: 'https://hashicorp.com'
+          files: 'pages/test.mdx'
 
       - run: |
           echo ${{ toJson(steps.action.outputs.annotations) }}

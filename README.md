@@ -1,6 +1,8 @@
-# HashiCorp's Link Checker
+# Link Checker
 
-![C/I Status](https://github.com/hashicorp/gh-action-check-broken-links/workflows/C/I/badge.svg)
+Maintained fork of [hashicorp/gh-action-check-broken-links](https://github.com/hashicorp/gh-action-check-broken-links), updated with modern tooling.
+
+![C/I Status](https://github.com/KaiSpencer/gh-action-check-broken-links/workflows/C/I/badge.svg)
 
 A GitHub Action that reports all broken links found within a set of provided `.mdx` files
 
@@ -17,7 +19,10 @@ Parses `.mdx` files, locating all links. Reports back any failed requests includ
 - name: HashiCorp's Link Checker
   uses: hashicorp/gh-action-check-broken-links@v1
   with:
+    # Required: The base URL to check links against
+    # For example: /pages/foo.mdx will be checked against https://hashicorp.com/foo
     baseUrl: 'https://hashicorp.com'
+    # Optional: Provide a list of files to check
     files: 'pages/foo.mdx pages/bar.mdx'
     whitelist: |
       https://google.com/whitelist

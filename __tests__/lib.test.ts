@@ -1,18 +1,31 @@
-jest.mock('node-fetch')
+import {
+  afterAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+  type Mock,
+} from 'vitest'
+
+vi.mock('node-fetch')
 import fetch from 'node-fetch'
 
 import path from 'path'
-import { Position } from 'unist'
+import type { Position } from 'unist'
 
 import * as lib from '../src/lib'
 import * as utils from '../src/utils'
 
 import pkg from '../package.json'
 
-const { Response } = jest.requireActual('node-fetch')
+const nodeFetchMock = await vi.importActual('node-fetch')
+const Response = nodeFetchMock.Response as typeof globalThis.Response
 
 describe(`${pkg.name} -- Library`, () => {
-  afterAll(() => jest.restoreAllMocks())
+  afterAll(() => {
+    vi.restoreAllMocks()
+  })
 
   describe('getLinkInfoFromFiles()', () => {
     it('should construct an array of objects that each contain both a filename and an array of its associated links', () => {
@@ -24,13 +37,13 @@ describe(`${pkg.name} -- Library`, () => {
         expect.arrayContaining([
           expect.objectContaining({
             filename: 'pages/consul.mdx',
-            links: expect.any(Array)
+            links: expect.any(Array),
           }),
           expect.objectContaining({
             filename: 'pages/terraform/getting-started.mdx',
-            links: expect.any(Array)
-          })
-        ])
+            links: expect.any(Array),
+          }),
+        ]),
       )
     })
 
@@ -39,7 +52,7 @@ describe(`${pkg.name} -- Library`, () => {
       const files = [
         'invalid/terraform/foo.mdx',
         'content/tutorials/vault/getting-started.mdx',
-        'pages/terraform/install.mdx'
+        'pages/terraform/install.mdx',
       ]
 
       const actual = lib.getLinkInfoFromFiles(workspace, files)
@@ -49,31 +62,33 @@ describe(`${pkg.name} -- Library`, () => {
       expect(actual).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
-            filename: 'content/tutorials/vault/getting-started.mdx'
+            filename: 'content/tutorials/vault/getting-started.mdx',
           }),
           expect.objectContaining({
-            filename: 'pages/terraform/install.mdx'
-          })
-        ])
+            filename: 'pages/terraform/install.mdx',
+          }),
+        ]),
       )
     })
   })
 
   describe('collectBrokenLinks()', () => {
-    const mockedFetch = (fetch as unknown) as jest.Mock<Promise<Response>>
+    const mockedFetch = fetch as unknown as Mock<any, Promise<Response>>
 
     beforeEach(() => {
-      jest.resetAllMocks()
+      vi.resetAllMocks()
     })
 
     it('should return an array of objects whose network request failed', async () => {
       const failedStatusCode = 555
       mockedFetch
         .mockReturnValueOnce(
-          Promise.resolve(new Response(undefined, { status: failedStatusCode }))
+          Promise.resolve(
+            new Response(undefined, { status: failedStatusCode }),
+          ),
         )
         .mockReturnValue(
-          Promise.resolve(new Response(undefined, { status: 200 }))
+          Promise.resolve(new Response(undefined, { status: 200 })),
         )
 
       const baseUrl = 'https://hashicorp.com'
@@ -81,11 +96,11 @@ describe(`${pkg.name} -- Library`, () => {
         {
           filename: 'pages/consul/getting-started/install.mdx',
           links: [
-            { url: '/foo', position: ({} as unknown) as Position },
-            { url: '/bar', position: ({} as unknown) as Position },
-            { url: '/baz', position: ({} as unknown) as Position }
-          ]
-        }
+            { url: '/foo', position: {} as unknown as Position },
+            { url: '/bar', position: {} as unknown as Position },
+            { url: '/baz', position: {} as unknown as Position },
+          ],
+        },
       ]
 
       const actual = await lib.collectBrokenLinks(baseUrl, linkInfo, [])
@@ -98,19 +113,19 @@ describe(`${pkg.name} -- Library`, () => {
             filename: 'pages/consul/getting-started/install.mdx',
             href: expect.objectContaining({
               relativeHref: '/foo',
-              qualifiedHref: 'https://hashicorp.com/foo'
+              qualifiedHref: 'https://hashicorp.com/foo',
             }),
             res: failedStatusCode,
-            position: expect.any(Object)
-          })
-        ])
+            position: expect.any(Object),
+          }),
+        ]),
       )
     })
 
     it('should not report any urls that are in the provided whitelist', async () => {
       const failedStatusCode = 555
       mockedFetch.mockReturnValue(
-        Promise.resolve(new Response(undefined, { status: failedStatusCode }))
+        Promise.resolve(new Response(undefined, { status: failedStatusCode })),
       )
 
       const baseUrl = 'https://hashicorp.com'
@@ -119,16 +134,16 @@ describe(`${pkg.name} -- Library`, () => {
         {
           filename: 'pages/consul/getting-started/install.mdx',
           links: [
-            { url: '/foo', position: ({} as unknown) as Position },
-            { url: '/bar', position: ({} as unknown) as Position },
-            { url: '/baz', position: ({} as unknown) as Position }
-          ]
-        }
+            { url: '/foo', position: {} as unknown as Position },
+            { url: '/bar', position: {} as unknown as Position },
+            { url: '/baz', position: {} as unknown as Position },
+          ],
+        },
       ]
 
       const whitelist = [
         'https://hashicorp.com/foo',
-        'https://hashicorp.com/baz'
+        'https://hashicorp.com/baz',
       ]
 
       const actual = await lib.collectBrokenLinks(baseUrl, linkInfo, whitelist)
@@ -141,18 +156,18 @@ describe(`${pkg.name} -- Library`, () => {
             filename: 'pages/consul/getting-started/install.mdx',
             href: expect.objectContaining({
               relativeHref: '/bar',
-              qualifiedHref: 'https://hashicorp.com/bar'
+              qualifiedHref: 'https://hashicorp.com/bar',
             }),
             res: failedStatusCode,
-            position: expect.any(Object)
-          })
-        ])
+            position: expect.any(Object),
+          }),
+        ]),
       )
     })
 
     it('should return an empty array if all urls returned successful network requests', async () => {
       mockedFetch.mockReturnValue(
-        Promise.resolve(new Response(undefined, { status: 200 }))
+        Promise.resolve(new Response(undefined, { status: 200 })),
       )
 
       const baseUrl = 'https://hashicorp.com'
@@ -161,11 +176,11 @@ describe(`${pkg.name} -- Library`, () => {
         {
           filename: 'pages/consul/getting-started/install.mdx',
           links: [
-            { url: '/foo', position: ({} as unknown) as Position },
-            { url: '/bar', position: ({} as unknown) as Position },
-            { url: '/baz', position: ({} as unknown) as Position }
-          ]
-        }
+            { url: '/foo', position: {} as unknown as Position },
+            { url: '/bar', position: {} as unknown as Position },
+            { url: '/baz', position: {} as unknown as Position },
+          ],
+        },
       ]
 
       const actual = await lib.collectBrokenLinks(baseUrl, linkInfo, [])
@@ -200,8 +215,10 @@ describe(`${pkg.name} -- Library`, () => {
   })
 
   describe('fetchStatusCode()', () => {
-    const mockedFetch = (fetch as unknown) as jest.Mock<Promise<Response>>
-    beforeEach(() => jest.restoreAllMocks())
+    const mockedFetch = fetch as unknown as Mock<any, Promise<Response>>
+    beforeEach(() => {
+      vi.restoreAllMocks()
+    })
 
     it('should perform a network request given a url', async () => {
       const href = 'https://google.com'
@@ -218,7 +235,7 @@ describe(`${pkg.name} -- Library`, () => {
       const statusCode = 301
 
       mockedFetch.mockReturnValueOnce(
-        Promise.resolve(new Response(undefined, { status: statusCode }))
+        Promise.resolve(new Response(undefined, { status: statusCode })),
       )
 
       const actual = await lib.fetchStatusCode(href)
@@ -242,16 +259,16 @@ describe(`${pkg.name} -- Library`, () => {
         const hash = `#${anchor}`
         const markup = '<html><h1>No anchor links here!</h1></html>'
 
-        const isAnchorLinkPresentSpy = jest
+        const isAnchorLinkPresentSpy = vi
           .spyOn(utils, 'isAnchorLinkPresent')
           .mockImplementation(() => false)
 
         mockedFetch.mockReturnValue(
           Promise.resolve(
             new Response(markup, {
-              status: 200
-            })
-          )
+              status: 200,
+            }),
+          ),
         )
 
         const actual = await lib.fetchStatusCode(`https://hashicorp.com${hash}`)
@@ -270,12 +287,12 @@ describe(`${pkg.name} -- Library`, () => {
         mockedFetch.mockReturnValue(
           Promise.resolve(
             new Response(markup, {
-              status
-            })
-          )
+              status,
+            }),
+          ),
         )
 
-        const isAnchorLinkPresentSpy = jest
+        const isAnchorLinkPresentSpy = vi
           .spyOn(utils, 'isAnchorLinkPresent')
           .mockImplementation(() => true)
 
@@ -288,13 +305,13 @@ describe(`${pkg.name} -- Library`, () => {
 
       it('should not treat shebang url fragments as anchor links', async () => {
         mockedFetch.mockReturnValue(
-          Promise.resolve(new Response(undefined, { status: 200 }))
+          Promise.resolve(new Response(undefined, { status: 200 })),
         )
 
-        const isAnchorLinkPresentSpy = jest.spyOn(utils, 'isAnchorLinkPresent')
+        const isAnchorLinkPresentSpy = vi.spyOn(utils, 'isAnchorLinkPresent')
 
         await lib.fetchStatusCode(
-          'https://groups.google.com/forum/#!forum/vault-tool'
+          'https://groups.google.com/forum/#!forum/vault-tool',
         )
 
         expect(isAnchorLinkPresentSpy).not.toHaveBeenCalled()

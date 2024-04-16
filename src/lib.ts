@@ -2,11 +2,12 @@ import * as core from '@actions/core'
 import url from 'url'
 import fetch from 'node-fetch'
 import path from 'path'
-import { Position } from 'unist'
-import { Endpoints } from '@octokit/types'
-import { findAllLinks, isAnchorLinkPresent, Link } from './utils'
+import type { Position } from 'unist'
+import type { Endpoints } from '@octokit/types'
+import { findAllLinks, isAnchorLinkPresent, type Link } from './utils'
 
-type CheckResult = Endpoints['POST /repos/:owner/:repo/check-runs']['parameters']
+type CheckResult =
+  Endpoints['POST /repos/{owner}/{repo}/check-runs']['parameters']
 type Annotations = NonNullable<
   NonNullable<CheckResult['output']>['annotations']
 >
@@ -28,22 +29,22 @@ interface BrokenLink {
 
 export function getLinkInfoFromFiles(
   workspace: string,
-  files: string[]
+  files: string[],
 ): LinkInfo[] {
   return files
-    .filter(filename => {
+    .filter((filename) => {
       return (
         filename.split('/').includes('pages') ||
         filename.split('/').includes('content')
       )
     })
-    .map(filename => {
+    .map((filename) => {
       const filepath = path.join(workspace, filename)
       const links = findAllLinks(filepath)
 
       return {
         filename,
-        links
+        links,
       }
     })
 }
@@ -51,7 +52,7 @@ export function getLinkInfoFromFiles(
 export async function collectBrokenLinks(
   baseUrl: string,
   linkInfo: LinkInfo[],
-  whitelist: string[]
+  whitelist: string[],
 ): Promise<BrokenLink[]> {
   const errors: BrokenLink[] = []
 
@@ -66,7 +67,7 @@ export async function collectBrokenLinks(
       // directory similarly in the learn project
       const urlPath = filename
         .split('/')
-        .filter(segment => segment !== 'pages' && segment !== 'content')
+        .filter((segment) => segment !== 'pages' && segment !== 'content')
         .join('/')
 
       const qualifiedHref = resolveUrl(baseUrl, urlPath, link.url)
@@ -80,7 +81,7 @@ export async function collectBrokenLinks(
           filename,
           href: { relativeHref: link.url, qualifiedHref },
           res,
-          position: link.position
+          position: link.position,
         })
       }
     }
@@ -91,7 +92,7 @@ export async function collectBrokenLinks(
 export function resolveUrl(
   baseUrl: string,
   urlPath: string,
-  href: string
+  href: string,
 ): string {
   const parsedHref = url.parse(href, false, true)
   // If url is already fully qualified (i.e. has protocol and/or host) we can return the url
@@ -124,7 +125,7 @@ export function resolveUrl(
 export async function fetchStatusCode(
   href: string,
   retries = 5,
-  retryDelay = 500
+  retryDelay = 500,
 ): Promise<number> {
   core.debug(`Fetching network status for url: "${href}"...`)
   try {
@@ -149,13 +150,13 @@ export async function fetchStatusCode(
     if (retries <= 1) return 503
 
     // Wait for <retryDelay>ms before attempting another fetch
-    await new Promise(res => setTimeout(() => res(), retryDelay))
+    await new Promise<void>((res) => setTimeout(() => res(), retryDelay))
     return await fetchStatusCode(href, retries - 1)
   }
 }
 
 export function createAnnotations(brokenLinks: BrokenLink[]): Annotations {
-  return brokenLinks.map(x => {
+  return brokenLinks.map((x) => {
     /* eslint-disable @typescript-eslint/camelcase */
     return {
       path: x.filename,
@@ -163,10 +164,10 @@ export function createAnnotations(brokenLinks: BrokenLink[]): Annotations {
       end_line: x.position.end.line,
       ...(x.position.start.line === x.position.end.line && {
         start_column: x.position.start.column,
-        end_column: x.position.end.column
+        end_column: x.position.end.column,
       }),
       annotation_level: 'failure',
-      message: `${x.href.qualifiedHref} :: ${errorMessage(x.res)}`
+      message: `${x.href.qualifiedHref} :: ${errorMessage(x.res)}`,
     }
     /* eslint-enable @typescript-eslint/camelcase */
   })
