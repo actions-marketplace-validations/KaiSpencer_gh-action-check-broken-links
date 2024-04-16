@@ -3,6 +3,7 @@ import path from 'path'
 import * as utils from '../src/utils'
 
 import pkg from '../package.json'
+import { describe, expect, it } from 'vitest'
 
 describe(`${pkg.name} -- Utilities`, () => {
   describe('findAllLinks()', () => {
@@ -10,12 +11,12 @@ describe(`${pkg.name} -- Utilities`, () => {
       const consulFile = path.join(
         __dirname,
         'fixtures/mdx/pages',
-        'consul.mdx'
+        'consul.mdx',
       )
       const terraformFile = path.join(
         __dirname,
         'fixtures/mdx/pages',
-        'terraform/getting-started.mdx'
+        'terraform/getting-started.mdx',
       )
 
       expect(utils.findAllLinks(consulFile)).toEqual(
@@ -24,17 +25,17 @@ describe(`${pkg.name} -- Utilities`, () => {
             url: 'https://github.com',
             position: expect.objectContaining({
               start: expect.any(Object),
-              end: expect.any(Object)
-            })
+              end: expect.any(Object),
+            }),
           }),
           expect.objectContaining({
             url: 'https://hashicorp.com',
             position: expect.objectContaining({
               start: expect.any(Object),
-              end: expect.any(Object)
-            })
-          })
-        ])
+              end: expect.any(Object),
+            }),
+          }),
+        ]),
       )
 
       expect(utils.findAllLinks(terraformFile)).toEqual(
@@ -43,17 +44,17 @@ describe(`${pkg.name} -- Utilities`, () => {
             url: '/start',
             position: expect.objectContaining({
               start: expect.any(Object),
-              end: expect.any(Object)
-            })
+              end: expect.any(Object),
+            }),
           }),
           expect.objectContaining({
             url: '#terraform-success',
             position: expect.objectContaining({
               start: expect.any(Object),
-              end: expect.any(Object)
-            })
-          })
-        ])
+              end: expect.any(Object),
+            }),
+          }),
+        ]),
       )
     })
   })

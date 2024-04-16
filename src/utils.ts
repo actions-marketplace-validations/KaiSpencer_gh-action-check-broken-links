@@ -1,13 +1,13 @@
 import fs from 'fs'
 import html from 'rehype-parse'
 import markdown from 'remark-parse'
-import unified from 'unified'
-import visit from 'unist-util-visit'
-import find from 'unist-util-find'
-import { Link as MdastLink } from 'mdast'
+import { unified } from 'unified'
+import { visit } from 'unist-util-visit'
+import { find } from 'unist-util-find'
+import type { Link as MdastLink } from 'mdast'
 
-import { Position } from 'unist'
-import { Node, Properties } from 'hast-format'
+import type { Position } from 'unist'
+import type { Node, Properties, Element } from 'hast-format'
 
 export interface Link {
   url: string
@@ -18,23 +18,26 @@ export function isAnchorLinkPresent(hash: string, markup: string): boolean {
   // Remove '#' from hash to create anchor link
   const anchor: string = hash.slice(1)
 
-  const ast = unified()
-    .use(html)
-    .parse(markup)
+  const ast = unified().use(html).parse(markup)
 
-  const match: Node | undefined = find(ast, (node: Node) => {
-    return (
-      // <a name={anchor}></a>
-      (node.tagName === 'a' &&
-        (node.properties as Properties)?.name === anchor) ||
-      // <a href={hash}></a>
-      (node.tagName === 'a' &&
-        (node.properties as Properties)?.href === hash) ||
-      // <{el} id={anchor}></{el}>
-      (node.type === 'element' &&
-        (node.properties as Properties)?.id === anchor)
-    )
-  })
+  const match: Node | undefined = find(
+    ast,
+    (
+      node: Node & { tagName?: Element['tagName']; properties?: Properties },
+    ) => {
+      return (
+        // <a name={anchor}></a>
+        (node.tagName === 'a' &&
+          (node.properties as Properties)?.['name'] === anchor) ||
+        // <a href={hash}></a>
+        (node.tagName === 'a' &&
+          (node.properties as Properties)?.['href'] === hash) ||
+        // <{el} id={anchor}></{el}>
+        (node.type === 'element' &&
+          (node.properties as Properties)?.['id'] === anchor)
+      )
+    },
+  )
 
   return Boolean(match)
 }
@@ -42,9 +45,7 @@ export function isAnchorLinkPresent(hash: string, markup: string): boolean {
 export function findAllLinks(filepath: string): Link[] {
   const links: Link[] = []
 
-  const ast = unified()
-    .use(markdown)
-    .parse(fs.readFileSync(filepath))
+  const ast = unified().use(markdown).parse(fs.readFileSync(filepath))
 
   visit(ast, 'link', (link: MdastLink) => {
     links.push({
@@ -54,9 +55,9 @@ export function findAllLinks(filepath: string): Link[] {
         : {
             position: {
               start: { line: 1, column: 1 },
-              end: { line: 1, column: 1 }
-            }
-          })
+              end: { line: 1, column: 1 },
+            },
+          }),
     })
     return
   })

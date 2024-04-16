@@ -2,7 +2,7 @@ import * as core from '@actions/core'
 import {
   getLinkInfoFromFiles,
   collectBrokenLinks,
-  createAnnotations
+  createAnnotations,
 } from './lib'
 
 // https://help.github.com/en/actions/configuring-and-managing-workflows/using-environment-variables#default-environment-variables
@@ -19,7 +19,7 @@ async function run({ GITHUB_WORKSPACE }: ActionEnvironment): Promise<void> {
       .split(' ')
       // Only support .mdx files at this time
       // TODO: Extend to provide support for more filetypes
-      .filter(x => x.endsWith('.mdx'))
+      .filter((x) => x.endsWith('.mdx'))
     const whitelist: string[] = core
       .getInput('whitelist')
       .split(/\r?\n/)
@@ -32,7 +32,7 @@ async function run({ GITHUB_WORKSPACE }: ActionEnvironment): Promise<void> {
     const brokenLinks = await collectBrokenLinks(
       baseUrl,
       filesWithLinks,
-      whitelist
+      whitelist,
     )
 
     if (!brokenLinks.length) return
@@ -42,9 +42,9 @@ async function run({ GITHUB_WORKSPACE }: ActionEnvironment): Promise<void> {
     core.setFailed(`${brokenLinks.length} broken links found!
 ---------
 
-${annotations.map(x => `Filename: ${x.path} :: ${x.message}`).join('\n')}`)
-  } catch (error) {
-    core.setFailed(error.message)
+${annotations.map((x) => `Filename: ${x.path} :: ${x.message}`).join('\n')}`)
+  } catch (error: unknown) {
+    core.setFailed((error as { message: string }).message)
   }
 }
 
