@@ -26,8 +26,12 @@ async function run({ GITHUB_WORKSPACE }: ActionEnvironment): Promise<void> {
       .filter(Boolean)
 
     const filesWithLinks = getLinkInfoFromFiles(GITHUB_WORKSPACE, files)
+    core.info(`Files with links: ${JSON.stringify(filesWithLinks)}`)
 
-    if (!filesWithLinks.length) return
+    if (!filesWithLinks.length) {
+      core.info('No links found in the files provided')
+      return
+    }
 
     const brokenLinks = await collectBrokenLinks(
       baseUrl,
@@ -35,7 +39,10 @@ async function run({ GITHUB_WORKSPACE }: ActionEnvironment): Promise<void> {
       whitelist,
     )
 
-    if (!brokenLinks.length) return
+    if (!brokenLinks.length) {
+      core.info('No broken links found')
+      return
+    }
 
     const annotations = createAnnotations(brokenLinks)
     core.setOutput('annotations', annotations)
