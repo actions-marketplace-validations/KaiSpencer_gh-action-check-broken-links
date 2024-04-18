@@ -6,9 +6,10 @@
   "scripts": {
     "watch": "tsc --watch",
     "tsc": "tsc",
-    "build": "ncc build",
+    "build": "$npm_execpath run tsc && ncc build",
+    "pack": "ncc build",
     "test": "vitest",
-    "all": "$npm_execpath run tsc && $npm_execpath run build && $npm_execpath run test --run"
+    "all": "$npm_execpath run tsc && $npm_execpath run pack && $npm_execpath run test --run"
   },
   "keywords": [
     "actions",
