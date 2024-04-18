@@ -1,4 +1,4 @@
-name: "Link Checker"
+name: "MDX Broken Link Checker"
 description: 'Report broken links found in a given set of files'
 author: 'Kai Spencer'
 
